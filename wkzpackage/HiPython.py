@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
-import math
-import functools
-import sys
-import types
-import logging
-import codecs
-import os, time, random
+import math, functools, sys, types, logging, codecs,base64,struct,hashlib,itertools
+import os, time, random, threading, multiprocessing, re
+import tkMessageBox,socket
+#这里不可以直接import Image
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from multiprocessing import Process, Pool, Queue
+from collections import namedtuple,deque,defaultdict,OrderedDict,Counter
+from Tkinter import *
 
 try:
 	import cStringIO as StringIO
@@ -727,7 +727,7 @@ __author__ = 'Wang kunzao'
 
 
 
-#进程相关
+# 进程相关
 # #window无法运行
 # print 'Process (%s) start...' % os.getpid()
 # pid = os.fork()
@@ -770,36 +770,471 @@ __author__ = 'Wang kunzao'
 # 	print 'All subprocesses done.'
 
 
+# 进程间通信
+# # 写数据进程执行的代码:
+# def write(q):
+#     for value in ['A', 'B', 'C']:
+#         print 'Put %s to queue...' % value
+#         q.put(value)
+#         time.sleep(random.random())
+#
+# # 读数据进程执行的代码:
+# def read(q):
+#     while True:
+#         value = q.get(True)
+#         print 'Get %s from queue.' % value
+#
+# if __name__=='__main__':
+#     # 父进程创建Queue，并传给各个子进程：
+#     q = Queue()
+#     pw = Process(target=write, args=(q,))
+#     pr = Process(target=read, args=(q,))
+#     # 启动子进程pw，写入:
+#     pw.start()
+#     # 启动子进程pr，读取:
+#     pr.start()
+#     # 等待pw结束:
+#     pw.join()
+#     # pr进程里是死循环，无法等待其结束，只能强行终止:
+#     pr.terminate()
 
 
 
-# 写数据进程执行的代码:
-def write(q):
-    for value in ['A', 'B', 'C']:
-        print 'Put %s to queue...' % value
-        q.put(value)
-        time.sleep(random.random())
 
-# 读数据进程执行的代码:
-def read(q):
-    while True:
-        value = q.get(True)
-        print 'Get %s from queue.' % value
-
-if __name__=='__main__':
-    # 父进程创建Queue，并传给各个子进程：
-    q = Queue()
-    pw = Process(target=write, args=(q,))
-    pr = Process(target=read, args=(q,))
-    # 启动子进程pw，写入:
-    pw.start()
-    # 启动子进程pr，读取:
-    pr.start()
-    # 等待pw结束:
-    pw.join()
-    # pr进程里是死循环，无法等待其结束，只能强行终止:
-    pr.terminate()
+# 多线程
+# # 新线程执行的代码:
+# def loop():
+# 	print 'thread %s is running...' % threading.current_thread().name
+# 	n = 0
+# 	while n < 5:
+# 		n += 1
+# 		print 'thread %s >>> %s' % (threading.current_thread().name, n)
+# 		time.sleep(1)
+# 	print 'thread %s ended.' % threading.current_thread().name
+#
+# print 'thread %s is running...' % threading.current_thread().name
+# t=threading.Thread(target=loop,name="LoopThread")
+# t.start()
+# t.join()
+# print 'thread %s ended.' % threading.current_thread().name
 
 
+# # 假定这是你的银行存款:
+# balance = 0
+# lock = threading.Lock()
+#
+# def change_it(n):
+# 	global balance
+# 	balance += n
+# 	balance -= n
+#
+# def run_thread(n):
+# 	for i in range(100000):
+# 		# 先要获取锁:
+# 		lock.acquire()
+# 		try:
+# 			change_it(i)
+# 		finally:
+# 			# 改完了一定要释放锁:
+# 			lock.release()
+#
+# t1 = threading.Thread(target=run_thread, args=(5,))
+# t2 = threading.Thread(target=run_thread, args=(8,))
+# t1.start()
+# t2.start()
+# t1.join()
+# t2.join()
+# print balance
+
+
+# 多线程没办法跑满所有CPU.【因为python的GIT】
+# def loop():
+# 	x = 0
+# 	while True:
+# 		x = x ^ 1
+# print multiprocessing.cpu_count()
+# for i in range(multiprocessing.cpu_count()):
+# 	t=threading.Thread(target=loop)
+# 	t.start()
+
+# # 创建全局ThreadLocal对象:
+# local_school = threading.local()
+# def process_student():
+# 	print 'Hello, %s (in %s)' %(local_school.student,threading.current_thread().name)
+#
+# def process_thread(name):
+# 	# 绑定ThreadLocal的student:
+# 	local_school.student=name;
+# 	process_student()
+#
+# t1=threading.Thread(target=process_thread,args=("alice",),name="t1")
+# t2=threading.Thread(target=process_thread,args=("bob",),name="t2")
+# t1.start()
+# t2.start()
+# t1.join()
+# t2.join()
+
+
+
+
+
+# regex正则表达式
+# if re.match(r"^\d{3}\-\d{3,8}$","010-12345"):
+# 	print 1
+# else:
+# 	print 0
+# 分组
+# m=re.match(r"^(\d{3})\-(\d{3,8})$","010-12345")
+# print m.group(0)
+# print m.group(1)
+# print m.group(2)
+# 切分
+# print re.split(r'[\s\,\;]+', 'a,b;; c  d')
+# #贪婪匹配
+# print re.match(r'^(\d+)(0*)$', '102300').groups()
+# #非贪婪匹配
+# print re.match(r'^(\d+?)(0*)$', '102300').groups()
+# 编译
+# re_telephone = re.compile(r'^(\d{3})-(\d{3,8})$')
+# print re_telephone.match('010-12345').groups()
+# print re_telephone.match('010-8086').groups()
+
+
+
+
+
+
+# 带有名字的tuple
+# Point = namedtuple('Point', ['x', 'y'])
+# p=Point(1,2)
+# print p.x,p.y
+# print isinstance(p,tuple)
+# print isinstance(p,Point)
+#
+# Circle = namedtuple('Circle', ['x', 'y', 'r'])
+
+
+
+# deque
+# q=deque(["a","b","c"])
+# #插入到末尾
+# q.append("x")
+# #插入到开头
+# q.appendleft("y")
+# print q
+
+
+
+
+# defaultdict
+# dd=defaultdict(lambda :"N/A")
+# dd["key1"]=123
+# print dd["key1"]
+# print dd["key2"]
+
+
+
+
+
+# OrderedDict
+# # d = {"a": 1, "b": 2, "c": 3}
+# d = dict([('a', 1), ('b', 2), ('c', 3)])
+# print d
+# od = OrderedDict([("a", 1), ('b', 2), ('c', 3)])
+# print od
+
+#使用OrderedDict实现FIFO队列
+# class LastUpdatedOrderedDict(OrderedDict):
+# 	def __init__(self, capacity):
+# 		super(LastUpdatedOrderedDict, self).__init__()
+# 		self._capacity = capacity
+#
+# 	def __setitem__(self, key, value):
+# 		containskey = 1 if key in self else 0
+# 		if (len(self) - containskey >= self._capacity):
+# 			last = self.popitem(last=False)
+# 			print "remove:", last
+# 		if (containskey):
+# 			del self[key]
+# 			print "set:", (key, value)
+# 		else:
+# 			print "add:", (key, value)
+# 		OrderedDict.__setitem__(self, key, value)
+#
+#
+# l = LastUpdatedOrderedDict(3)
+# l["a"]=1
+# l["b"]=1
+# l["c"]=1
+# l["d"]=1
+# print l
+
+
+
+#适用于Worldount
+# c = Counter()
+# for ch in 'programming':
+# 	c[ch] = c[ch] + 1
+# print c
+
+
+
+
+#base64编码解码
+# #编码
+# print base64.b64encode("binary\x00string")
+# #解码
+# print base64.b64decode("YmluYXJ5AHN0cmluZw==")
+
+# print base6004.urlsafe_b64decode('abcd--__')
+
+
+
+
+#md5
+# md5= hashlib.md5()
+# md5.update("how to use md5 in python hashlib?")
+# print md5.hexdigest()
+# sha1算法
+# sha1 = hashlib.sha1()
+# sha1.update("how to use md5 in python hashlib?")
+# print sha1.hexdigest()
+
+
+
+
+#itertools模块提供的全部是处理迭代功能的函数，它们的返回值不是list，而是迭代对象，只有用for循环迭代的时候才真正计算
+#2是开始值,无限+1,一直执行
+# natuals= itertools.count(2)
+# ns = itertools.takewhile(lambda x: x <= 10, natuals)
+# for n in ns:
+# 	print n
+# 	threading._sleep(1)
+
+#无限重复字符串序列
+# cs = itertools.cycle('ABC') # 注意字符串也是序列的一种
+# for c in cs:
+# 	print c
+# 	threading._sleep(1)
+
+#重复指定次数的字符串【不指定次数，一直执行】
+# repeat = itertools.repeat("Asdf", 10)
+# for c in repeat:
+# 	print c
+
+#把一组迭代对象串联起来，形成一个更大的迭代器
+# for c in itertools.chain("abc","def"):
+# 	print c
+
+#分组(后面可设置不区分大小写,不写则区分)
+# for key,group in itertools.groupby("aAabBbccAA",lambda c:c.upper()):
+# 	print key,list(group)
+
+#跟map基本一样,
+# imap()可以作用于无穷序列，并且，如果两个序列的长度不一致，以短的那个为准
+# imap()返回一个迭代对象，而map()返回list
+# for x in itertools.imap(lambda x,y:x*y,[10,20,30],itertools.count(1)):
+# 	print x
+
+
+
+
+#XML
+#http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/001407499098340324a6232bfee42348849d53c90576747000
+
+# HTMLParser
+# http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/001407500818913cef22f247dbd4699921fe9d309727a20000
+
+
+
+
+
+
+
+
+
+#PIL
+#缩放50%
+# # 打开一个jpg图像文件，注意路径要改成你自己的:
+# im = Image.open('d:/tmp/aa.jpg')
+# # 获得图像尺寸:
+# w, h = im.size
+# # 缩放到50%:
+# im.thumbnail((w//2, h//2))
+# # 把缩放后的图像用jpeg格式保存:
+# im.save('d:/tmp/thumbnail.jpg', 'jpeg')
+
+#模糊效果
+# im = Image.open('d:/tmp/aa.jpg')
+# im2=im.filter(ImageFilter.BLUR)
+# im2.save('d:/tmp/blur.jpg', 'jpeg')
+
+#验证码
+# # 随机字母:
+# def rndChar():
+#     return chr(random.randint(65, 90))
+# # 随机颜色1:
+# def rndColor():
+#     return (random.randint(64, 255), random.randint(64, 255), random.randint(64, 255))
+# # 随机颜色2:
+# def rndColor2():
+#     return (random.randint(32, 127), random.randint(32, 127), random.randint(32, 127))
+# # 240 x 60:
+# width = 60 * 4
+# height = 60
+# image = Image.new('RGB', (width, height), (255, 255, 255))
+# # 创建Font对象:
+# font = ImageFont.truetype('C:/Windows/Fonts/Arial.ttf', 36)
+# # 创建Draw对象:
+# draw = ImageDraw.Draw(image)
+# # 填充每个像素:
+# for x in range(width):
+#     for y in range(height):
+#         draw.point((x, y), fill=rndColor())
+# # 输出文字:
+# for t in range(4):
+#     draw.text((60 * t + 10, 10), rndChar(), font=font, fill=rndColor2())
+# # 模糊:
+# image = image.filter(ImageFilter.BLUR)
+# image.save('d:/tmp/code.jpg', 'jpeg');
+
+
+
+
+
+
+
+#GUI程序,图形界面
+# class Application(Frame):
+#     def __init__(self, master=None):
+#         Frame.__init__(self, master)
+#         self.pack()
+#         self.createWidgets()
+#
+#     def createWidgets(self):
+#         self.helloLabel = Label(self, text='Hello, world!')
+#         self.helloLabel.pack()
+#         self.quitButton = Button(self, text='Quit', command=self.quit)
+#         self.quitButton.pack()
+# app = Application()
+# # 设置窗口标题:
+# app.master.title('Hello World')
+# # 主消息循环:
+# app.mainloop()
+
+# class Application(Frame):
+#     def __init__(self, master=None):
+#         Frame.__init__(self, master)
+#         self.pack()
+#         self.createWidgets()
+#
+#     def createWidgets(self):
+#         self.nameInput = Entry(self)
+#         self.nameInput.pack()
+#         self.alertButton = Button(self, text='Hello', command=self.hello)
+#         self.alertButton.pack()
+#
+#     def hello(self):
+#         name = self.nameInput.get() or 'world'
+#         tkMessageBox.showinfo('Message', 'Hello, %s' % name)
+# app = Application()
+# # 设置窗口标题:
+# app.master.title('Hello World')
+# # 主消息循环:
+# app.mainloop()
+
+
+
+
+
+
+
+#socket编程
+#TCP编程
+# # 创建一个socket:
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# # 建立连接:
+# s.connect(('www.sina.com.cn', 80))
+# s.send('GET / HTTP/1.1\r\nHost: www.sina.com.cn\r\nConnection: close\r\n\r\n')
+# # 接收数据:
+# buffer = []
+# while True:
+#     # 每次最多接收1k字节:
+#     d = s.recv(1024)
+#     if d:
+#         buffer.append(d)
+#     else:
+#         break
+# data = ''.join(buffer)
+# # 关闭连接:
+# s.close()
+# header, html = data.split('\r\n\r\n', 1)
+# print header
+# # 把接收的数据写入文件:
+# with open('d:/tmp/sina.html', 'wb') as f:
+#     f.write(html)
+# print data
+
+# #服务器
+# def tcplink(sock, addr):
+#     print 'Accept new connection from %s:%s...' % addr
+#     sock.send('Welcome!')
+#     while True:
+#         data = sock.recv(1024)
+#         time.sleep(1)
+#         if data == 'exit' or not data:
+#             break
+#         sock.send('Hello, %s!' % data)
+#     sock.close()
+#     print 'Connection from %s:%s closed.' % addr
+#
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# # 监听端口:
+# s.bind(('127.0.0.1', 9999))
+# #指定等待连接的最大数量
+# s.listen(5)
+# print 'Waiting for connection...'
+#
+# while True:
+#     # 接受一个新连接:
+#     sock, addr = s.accept()
+#     # 创建新线程来处理TCP连接:
+#     t = threading.Thread(target=tcplink, args=(sock, addr))
+#     t.start()
+#
+# #客户端
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# # 建立连接:
+# s.connect(('127.0.0.1', 9999))
+# # 接收欢迎消息:
+# print s.recv(1024)
+# for data in ['Michael', 'Tracy', 'Sarah']:
+#     # 发送数据:
+#     s.send(data)
+#     print s.recv(1024)
+# s.send('exit')
+# s.close()
+
+
+
+#UDP编程
+# #服务端
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# # 绑定端口:
+# s.bind(('127.0.0.1', 9999))
+# print 'Bind UDP on 9999...'
+# while True:
+#     # 接收数据:
+#     data, addr = s.recvfrom(1024)
+#     print 'Received from %s:%s.' % addr
+#     s.sendto('Hello, %s!' % data, addr)
+# #客户端
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# for data in ['Michael', 'Tracy', 'Sarah']:
+#     # 发送数据:
+#     s.sendto(data, ('127.0.0.1', 9999))
+#     # 接收数据:
+#     print s.recv(1024)
+# s.close()
 
 
