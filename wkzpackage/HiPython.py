@@ -8,7 +8,7 @@ import tkMessageBox,socket
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from multiprocessing import Process, Pool, Queue
 from collections import namedtuple,deque,defaultdict,OrderedDict,Counter
-from Tkinter import *
+# from Tkinter import *
 
 try:
 	import cStringIO as StringIO
@@ -1055,14 +1055,14 @@ __author__ = 'Wang kunzao'
 
 #PIL
 #缩放50%
-# # 打开一个jpg图像文件，注意路径要改成你自己的:
-# im = Image.open('d:/tmp/aa.jpg')
-# # 获得图像尺寸:
-# w, h = im.size
-# # 缩放到50%:
-# im.thumbnail((w//2, h//2))
-# # 把缩放后的图像用jpeg格式保存:
-# im.save('d:/tmp/thumbnail.jpg', 'jpeg')
+# 打开一个jpg图像文件，注意路径要改成你自己的:
+im = Image.open('d:/tmp/aa.jpg')
+# 获得图像尺寸:
+w, h = im.size
+# 缩放到50%:
+im.thumbnail((w//2, h//2))
+# 把缩放后的图像用jpeg格式保存:
+im.save('d:/tmp/thumbnail.jpg', 'jpeg')
 
 #模糊效果
 # im = Image.open('d:/tmp/aa.jpg')
