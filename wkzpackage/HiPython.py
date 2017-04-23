@@ -18,9 +18,8 @@ try:
 	import json  # python >= 2.6
 except ImportError:
 	import simplejson as json  # python <= 2.5
-# 序列化
 try:
-	import cPickle as pickle
+	import cPickle as pickle	# 序列化
 except ImportError:
 	import pickle
 
